@@ -1,0 +1,25 @@
+# Fichiers Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Fichiers de modèle
+*.joblib
+
+# Environnement virtuel
+venv/
+env/
+ENV/
+
+# Fichiers IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Notebooks
+*.ipynb 
