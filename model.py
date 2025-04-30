@@ -2,11 +2,13 @@ import pandas as pd
 import numpy as np
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
+from deep_translator import GoogleTranslator
 
 class SentimentAnalyzer:
     def __init__(self):
         # Chemin vers le modèle entraîné
         self.model_path = "./models/twitter-sentiment-model"
+        self.translator = GoogleTranslator(source='auto', target='en')
         
         try:
             # Essayer de charger le modèle entraîné
@@ -18,10 +20,21 @@ class SentimentAnalyzer:
             self.model_name = "bert-base-uncased"
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
             self.model = AutoModelForSequenceClassification.from_pretrained(self.model_name, num_labels=3)
-        
+    
+    def translate_to_english(self, text):
+        try:
+            # Traduire en anglais
+            translation = self.translator.translate(text)
+            return translation
+        except Exception as e:
+            print(f"Erreur de traduction : {str(e)}")
+            return text
+    
     def preprocess_text(self, text):
         # Nettoyage du texte
         text = str(text).lower()
+        # Traduction en anglais si nécessaire
+        text = self.translate_to_english(text)
         return text
     
     def predict(self, text):
