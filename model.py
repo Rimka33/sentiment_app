@@ -2,13 +2,18 @@ import pandas as pd
 import numpy as np
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
-from deep_translator import GoogleTranslator
+from googletrans import Translator
+import logging
+
+# Configuration du logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class SentimentAnalyzer:
     def __init__(self):
         # Chemin vers le modèle entraîné
         self.model_path = "./models/twitter-sentiment-model"
-        self.translator = GoogleTranslator(source='auto', target='en')
+        self.translator = Translator()
         
         try:
             # Essayer de charger le modèle entraîné
@@ -16,25 +21,44 @@ class SentimentAnalyzer:
             self.model = AutoModelForSequenceClassification.from_pretrained(self.model_path)
         except:
             # Si le modèle n'existe pas, utiliser le modèle de base
-            print("Modèle entraîné non trouvé, utilisation du modèle de base")
+            logger.info("Modèle entraîné non trouvé, utilisation du modèle de base")
             self.model_name = "bert-base-uncased"
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
             self.model = AutoModelForSequenceClassification.from_pretrained(self.model_name, num_labels=3)
     
     def translate_to_english(self, text):
         try:
-            # Traduire en anglais
-            translation = self.translator.translate(text)
-            return translation
+            logger.info(f"Texte original : {text}")
+            # Vérifier si le texte est vide ou None
+            if not text or not text.strip():
+                logger.warning("Texte vide reçu")
+                return text
+            
+            # Détecter la langue
+            detected = self.translator.detect(text)
+            logger.info(f"Langue détectée : {detected.lang}")
+            
+            # Traduire seulement si ce n'est pas déjà en anglais
+            if detected.lang != 'en':
+                translation = self.translator.translate(text, dest='en')
+                logger.info(f"Texte traduit : {translation.text}")
+                return translation.text
+            else:
+                logger.info("Le texte est déjà en anglais")
+                return text
+                
         except Exception as e:
-            print(f"Erreur de traduction : {str(e)}")
+            logger.error(f"Erreur de traduction : {str(e)}")
             return text
     
     def preprocess_text(self, text):
         # Nettoyage du texte
-        text = str(text).lower()
+        text = str(text).lower().strip()
+        logger.info(f"Texte après nettoyage : {text}")
+        
         # Traduction en anglais si nécessaire
         text = self.translate_to_english(text)
+        logger.info(f"Texte final après prétraitement : {text}")
         return text
     
     def predict(self, text):
@@ -55,6 +79,9 @@ class SentimentAnalyzer:
         # Mapping des indices aux sentiments
         sentiment_map = {0: "Négatif", 1: "Neutre", 2: "Positif"}
         sentiment = sentiment_map[np.argmax(probs)]
+        
+        logger.info(f"Sentiment prédit : {sentiment}")
+        logger.info(f"Probabilités : {probs}")
         
         return {
             "sentiment": sentiment,
