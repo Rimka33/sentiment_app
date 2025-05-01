@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
-from googletrans import Translator
+from deep_translator import GoogleTranslator
 import logging
 
 # Configuration du logging
@@ -13,7 +13,7 @@ class SentimentAnalyzer:
     def __init__(self):
         # Chemin vers le modèle entraîné
         self.model_path = "./models/twitter-sentiment-model"
-        self.translator = Translator()
+        self.translator = GoogleTranslator(source='auto', target='en')
         
         try:
             # Essayer de charger le modèle entraîné
@@ -34,18 +34,10 @@ class SentimentAnalyzer:
                 logger.warning("Texte vide reçu")
                 return text
             
-            # Détecter la langue
-            detected = self.translator.detect(text)
-            logger.info(f"Langue détectée : {detected.lang}")
-            
-            # Traduire seulement si ce n'est pas déjà en anglais
-            if detected.lang != 'en':
-                translation = self.translator.translate(text, dest='en')
-                logger.info(f"Texte traduit : {translation.text}")
-                return translation.text
-            else:
-                logger.info("Le texte est déjà en anglais")
-                return text
+            # Traduire le texte
+            translated_text = self.translator.translate(text)
+            logger.info(f"Texte traduit : {translated_text}")
+            return translated_text
                 
         except Exception as e:
             logger.error(f"Erreur de traduction : {str(e)}")
